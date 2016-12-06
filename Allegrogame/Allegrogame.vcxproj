@@ -22,6 +22,7 @@
     <ProjectGuid>{BE0F2776-55FF-4C69-AD82-47D30943FDA2}</ProjectGuid>
     <RootNamespace>Allegrogame</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>Zombies-The_Final_Hour</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

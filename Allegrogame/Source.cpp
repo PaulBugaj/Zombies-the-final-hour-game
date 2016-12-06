@@ -7,50 +7,53 @@
 
 int main(void)
 {
+	//Initializers
 	al_init();
 	al_install_keyboard();
 	al_init_image_addon();
 	al_init_font_addon();
 	al_init_ttf_addon();
-	ALLEGRO_DISPLAY *display;
+
+	//Variables
 	bool keys[] = { false, false, false, false };
 	enum KEYS { DOWN, LEFT, RIGHT, UP };
+	float x = 640, y = 400, moveSpeed = 0;
 	const float FPS = 60.0;
-	const int WIDTH = 1066;
-	const int HEIGHT = 600;
-	bool render = false;
-
+	bool done = false, draw = true, active = false;
+	const int WIDTH = 1280;
+	const int HEIGHT = 800;
 	int xcam = 0;
 	int ycam = 0;
-
-	int mapColumns = 20;
+	int mapcolumn = 20;
 	int mapSize = 400;
 	int tileSize = 100;
+	int dir = DOWN, sourceX = 250, sourceY = 0;
 
 	int map[] = { 5, 5, 5, 6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6, 5, 5, 5, 5, 5, 5,
-				  1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
-				  2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
-				  2, 2, 1, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5,
-				  2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
-				  2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
-				  2, 2, 1, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 5, 5, 5, 5, 5, 5,
-				  2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
-				  2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2};
+		1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
+		2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
+		2, 2, 1, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 5, 5, 5,
+		2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
+		2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
+		2, 2, 1, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 3, 5, 5, 5, 5, 5, 5,
+		2, 2, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2,
+		2, 2, 1, 0, 1, 2, 2, 2, 2, 2, 2, 2, 1, 0, 1, 2, 2, 2, 2, 2 };
 
 	if (!al_init())
 		al_show_native_message_box(NULL, "ERROR", NULL, "Could not initialize Allegro", NULL, NULL);
-
+	
+	ALLEGRO_DISPLAY *display;
 	display = al_create_display(WIDTH, HEIGHT);
 
 	if (!display)
@@ -58,25 +61,18 @@ int main(void)
 
 	al_set_window_position(display, 200, 200);
 
-	bool done = false, draw = true, active = false;
-	float x = 533, y = 300, moveSpeed = 1;
-	int dir = DOWN, sourceX = 250, sourceY = 0;
-
-	ALLEGRO_BITMAP *player = al_load_bitmap("postac.png");
+	ALLEGRO_BITMAP *player = al_load_bitmap("NEWPOSTWBACK.png");
 	ALLEGRO_BITMAP *title = al_load_bitmap("zombies.png");
-	ALLEGRO_BITMAP *map1 = NULL;
-	map1 = al_load_bitmap("zombiemap.png");
-	al_convert_mask_to_alpha(player, al_map_rgb(241, 228, 77));
+	ALLEGRO_BITMAP *map1 = al_load_bitmap("FIXEDMAP.png");
+	al_convert_mask_to_alpha(player, al_map_rgb(241, 23, 23));
 	ALLEGRO_KEYBOARD_STATE keystate;
-
 	ALLEGRO_TIMER *timer = al_create_timer(1.0 / FPS);
 	ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
+	ALLEGRO_FONT *font18 = al_load_font("arial.ttf", 18, 0);
 
 	al_register_event_source(event_queue, al_get_timer_event_source(timer));
 	al_register_event_source(event_queue, al_get_display_event_source(display));
 	al_register_event_source(event_queue, al_get_keyboard_event_source());
-
-	ALLEGRO_FONT *font18 = al_load_font("arial.ttf", 18, 0);
 
 	al_start_timer(timer);
 
@@ -84,11 +80,13 @@ int main(void)
 	al_flip_display();
 	al_rest(2.0);
 
+
 	while (!done)
 	{
 		ALLEGRO_EVENT ev;
 		al_wait_for_event(event_queue, &ev);
 		al_get_keyboard_state(&keystate);
+
 		if (ev.type == ALLEGRO_EVENT_KEY_DOWN)
 		{
 			switch (ev.keyboard.keycode)
@@ -140,12 +138,11 @@ int main(void)
 
 		else if (ev.type == ALLEGRO_EVENT_TIMER)
 		{
-			xcam -= keys[RIGHT] * 5;
-			xcam += keys[LEFT] * 5;
-			ycam -= keys[DOWN] * 5;
-			ycam += keys[UP] * 5;
+			xcam -= keys[RIGHT] * 3;
+			xcam += keys[LEFT] * 3;
+			ycam -= keys[DOWN] * 3;
+			ycam += keys[UP] * 3;
 
-			render = true;
 			active = true;
 			if (al_key_down(&keystate, ALLEGRO_KEY_DOWN))
 			{
@@ -180,19 +177,13 @@ int main(void)
 			draw = true;
 		}
 
-		if (render && al_is_event_queue_empty(event_queue))
+		if (draw)
 		{
-			render = false;
 			for (int i = 0; i < mapSize; i++)
 			{
 				al_draw_bitmap_region(map1, tileSize * map[i], 0, tileSize, tileSize,
-					xcam + tileSize * (i % mapColumns), ycam + tileSize * (i / mapColumns), 0);
+				xcam + tileSize * (i % mapcolumn), ycam + tileSize * (i / mapcolumn), 0);
 			}
-
-		}
-
-		if (draw)
-		{
 			al_draw_bitmap_region(player, sourceX, sourceY * al_get_bitmap_height(player) / 4, 50, 50, x, y, NULL);
 			al_flip_display();
 			al_clear_to_color(al_map_rgb(0, 0, 0));
