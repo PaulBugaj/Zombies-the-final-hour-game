@@ -13,12 +13,18 @@ const int NUM_BULLETS = 7;
 int help;
 int help2;
 int swag;
-
+//Start with main menu/ Used to switch menus
+int gamestate = 2;
 bool keys[] = { false, false, false, false, false};
 
-enum KEYS { DOWN, LEFT, RIGHT, UP, SPACE };
+enum KEYS { DOWN, LEFT, RIGHT, UP, SPACE};
 enum IDS { PLAYER, BULLET, ENEMY };
 enum STATE { IDLE, ATTACKING, RETURNING };
+
+/*struct zombie
+{
+
+};*/
 
 struct Bullet
 {
@@ -189,6 +195,7 @@ int main(void)
 //Initializers
 	al_init();
 	al_install_keyboard();
+	al_install_mouse();
 	al_init_image_addon();
 	al_init_font_addon();
 	al_init_ttf_addon();
@@ -216,15 +223,19 @@ int main(void)
 	int dir1 = DOWN;
 	int life = 3;
 	int zomblife = 5;
-	int exp = 0;
+	int exp = 10;
 	//Zombies position
 	int zombposx = originx;
 	int zombposy = originy;
 	int sourceA = 0, sourceZ = 250;
 	int aggrorange = 220;
 
+	//Cursor
+	int pos_x;
+	int pos_y;
+
 	//Character
-	float x = 400, y = 400, x1 = 10, y1 = 10, moveSpeed = 2.5;
+	float x = 20, y = 85, x1 = 10, y1 = 10, moveSpeed = 2.5;
 	bool active = false;
 	
 	//Camera
@@ -306,9 +317,19 @@ int main(void)
 	ALLEGRO_BITMAP *townhousedown = al_load_bitmap("townhouse2.png");
 	ALLEGRO_BITMAP *townhouseleft = al_load_bitmap("townhouseleft.png");
 	ALLEGRO_BITMAP *townhouse = al_load_bitmap("townhouse.png");
+	ALLEGRO_BITMAP *apocalypse = al_load_bitmap("apocalypse.jpg");
+	ALLEGRO_BITMAP *controlsmenu = al_load_bitmap("controlsmenu.jpg");
+	ALLEGRO_BITMAP *inventory = al_load_bitmap("charinterface.png");
+	ALLEGRO_BITMAP *Health = al_load_bitmap("Hp.png");
+	ALLEGRO_BITMAP *minimap = al_load_bitmap("minimap.png");
+	ALLEGRO_BITMAP *emptyheart = al_load_bitmap("emptyheart.png");
+	ALLEGRO_BITMAP *clock = al_load_bitmap("clock.png");
+	al_convert_mask_to_alpha(clock, al_map_rgb(107, 107, 107));
 
 	ALLEGRO_KEYBOARD_STATE keystate;
-	ALLEGRO_FONT *font18 = al_load_font("arial.ttf", 18, 0);
+	ALLEGRO_FONT *font18 = al_load_font("arial.ttf", 30, 0);
+	ALLEGRO_FONT *font19 = al_load_font("arial.ttf", 60, 0);
+	ALLEGRO_FONT *font20 = al_load_font("arial.ttf", 70, 0);
 	stateswitch(state, IDLE);
 
 	ALLEGRO_EVENT_QUEUE *event_queue = al_create_event_queue();
@@ -320,6 +341,7 @@ int main(void)
 	al_register_event_source(event_queue, al_get_timer_event_source(timer));
 	al_register_event_source(event_queue, al_get_display_event_source(display));
 	al_register_event_source(event_queue, al_get_keyboard_event_source());
+	al_register_event_source(event_queue, al_get_mouse_event_source());
 
 	al_start_timer(timer);
 	gameTime = al_current_time();
@@ -331,152 +353,264 @@ int main(void)
 
 	while (!done)
 	{
-		ALLEGRO_EVENT ev;
-		al_wait_for_event(event_queue, &ev);
-		al_get_keyboard_state(&keystate);
-		
-		if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
+		//Start menu
+		if (gamestate == 2)
 		{
+			ALLEGRO_EVENT ev2;
+			al_wait_for_event(event_queue, &ev2);
+		 if (ev2.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN)
+		{
+			pos_x = ev2.mouse.x;
+			pos_y = ev2.mouse.y;
+		}
+		 al_draw_bitmap(apocalypse, 0, 0,0);
+		 al_draw_textf(font18, al_map_rgb(255, 255, 255), 500, 5, ALLEGRO_ALIGN_RIGHT,
+				"mouse pos x: %.0i", pos_x);
+		al_draw_textf(font18, al_map_rgb(255, 255, 255), 1000, 5, ALLEGRO_ALIGN_RIGHT,
+				"mouse pos y: %.0i", pos_y);
+
+		//Start game
+		if ((pos_x < 1130) && (pos_x > 760) && (pos_y < 530) && (pos_y > 470))
+		{
+			pos_x = -100;
+			pos_y = -100;
+			gamestate = 1;
+		}
+
+		//Enter controls menu
+		if ((pos_x < 1090) && (pos_x > 780) && (pos_y < 690) && (pos_y > 620))
+		{
+			pos_x = -100;
+			pos_y = -100;
+			gamestate = 3;
+		}
+
+		//Exit game
+		if ((pos_x < 1000) && (pos_x > 850) && (pos_y < 840) && (pos_y > 770))
+		{
+			pos_x = -100;
+			pos_y = -100;
 			done = true;
 		}
 
-		if (ev.type == ALLEGRO_EVENT_KEY_DOWN)
+		al_flip_display();
+		al_clear_to_color(al_map_rgb(0, 0, 0));
+		}	
+		
+		//Inventory screen
+		if (gamestate == 5)
 		{
-			switch (ev.keyboard.keycode)
-			{
-			case ALLEGRO_KEY_ESCAPE:
-				done = true;
-				break;
-			case ALLEGRO_KEY_LEFT:
-				keys[LEFT] = true;
-				break;
-			case ALLEGRO_KEY_RIGHT:
-				keys[RIGHT] = true;
-				break;
-			case ALLEGRO_KEY_UP:
-				keys[UP] = true;
-				break;
-			case ALLEGRO_KEY_DOWN:
-				keys[DOWN] = true;
-				break;
-			case ALLEGRO_KEY_SPACE:
-				keys[SPACE] = true;
-				FireBullet(bullets, NUM_BULLETS, x, y);
-				break;
-			}
+		ALLEGRO_EVENT ev5;
+		al_wait_for_event(event_queue, &ev5);
+		if (ev5.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN)
+		{
+		pos_x = ev5.mouse.x;
+		pos_y = ev5.mouse.y;
 		}
+		al_draw_bitmap(inventory, 0, 0, 0);
+		al_draw_textf(font18, al_map_rgb(255, 255, 255), 200, 5, ALLEGRO_ALIGN_RIGHT,
+		"pos x: %.0i", pos_x);
 
-		else if (ev.type == ALLEGRO_EVENT_KEY_UP)
+		al_draw_textf(font18, al_map_rgb(255, 255, 255), 500, 5, ALLEGRO_ALIGN_RIGHT,
+		"pos y: %.0i", pos_y);
+
+		al_draw_textf(font20, al_map_rgb(63, 72, 204), 1830, 40, ALLEGRO_ALIGN_RIGHT,
+			" %i", exp);
+
+		al_draw_textf(font19, al_map_rgb(237, 28, 36), 980, 507, ALLEGRO_ALIGN_RIGHT,
+			" %.0f", moveSpeed);
+
+		al_draw_textf(font19, al_map_rgb(237, 28, 36), 900, 385, ALLEGRO_ALIGN_RIGHT,
+			" %.0i", life);
+
+		//Return to game
+		if ((pos_x < 482) && (pos_x > 19) && (pos_y < 1037) && (pos_y > 867))
 		{
-			switch (ev.keyboard.keycode)
-			{
-			case ALLEGRO_KEY_ESCAPE:
-				done = true;
-				break;
-			case ALLEGRO_KEY_LEFT:
-				keys[LEFT] = false;
-				break;
-			case ALLEGRO_KEY_RIGHT:
-				keys[RIGHT] = false;
-				break;
-			case ALLEGRO_KEY_UP:
-				keys[UP] = false;
-				break;
-			case ALLEGRO_KEY_DOWN:
-				keys[DOWN] = false;
-				break;
-			case ALLEGRO_KEY_SPACE:
-				keys[SPACE] = false;
-				break;
-			}
+		gamestate = 1;
+		pos_x = -100;
+		pos_y = -100;
 		}
 		
-
-		//START OF TIMER~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		else if (ev.type == ALLEGRO_EVENT_TIMER)
+		//+1 hp
+		if ((pos_x < 1118) && (pos_x > 1059) && (pos_y < 430) && (pos_y > 367))
 		{
-			render = true;
-
-			//UPDATE FPS
-			frames++;
-			if (al_current_time() - gameTime >= 1)
+		if(exp>=3)
 			{
-				gameTime = al_current_time();
-				gameFPS = frames;
-				frames = 0;
+			exp-=3;
+			life+=1;
+			}
+		pos_x = -100;
+		pos_y = -100;
+		}
+
+		//+1 Speed
+		if ((pos_x < 1118) && (pos_x > 1059) && (pos_y < 558) && (pos_y > 496))
+		{
+		if(exp>=4)
+			{
+			exp-=4;
+			moveSpeed+=1;
+			}
+		pos_x = -100;
+		pos_y = -100;
+		}
+
+		al_flip_display();
+		al_clear_to_color(al_map_rgb(0, 0, 0));
+		}
+
+		//Start of level 1
+		if (gamestate == 1)
+		{
+			ALLEGRO_EVENT ev;
+			al_wait_for_event(event_queue, &ev);
+			al_get_keyboard_state(&keystate);
+
+			if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
+			{
+				done = true;
 			}
 
-			//Set Barrier around map
-			//Physical barrier around map
-			if (x < 20) //left
-				x = 20;
-
-			if (x > WIDTH-20) //Right
-				x = WIDTH-20;
-
-			if (y > HEIGHT-20) //Down
-				y = HEIGHT-20;
-
-			if (y < 20) //Up
-				y = 20;
-
-			active = true;
-			if (al_key_down(&keystate, ALLEGRO_KEY_DOWN))
+			if (ev.type == ALLEGRO_EVENT_KEY_DOWN)
 			{
-				y += moveSpeed;
-				dir = DOWN;
-				help2 = 2;
-				help = 0;
+				switch (ev.keyboard.keycode)
+				{
+				case ALLEGRO_KEY_ESCAPE:
+					done = true;
+					break;
+				case ALLEGRO_KEY_LEFT:
+					keys[LEFT] = true;
+					break;
+				case ALLEGRO_KEY_RIGHT:
+					keys[RIGHT] = true;
+					break;
+				case ALLEGRO_KEY_UP:
+					keys[UP] = true;
+					break;
+				case ALLEGRO_KEY_DOWN:
+					keys[DOWN] = true;
+					break;
+				case ALLEGRO_KEY_SPACE:
+					keys[SPACE] = true;
+					FireBullet(bullets, NUM_BULLETS, x, y);
+					break;
+				case ALLEGRO_KEY_I:
+					gamestate = 5;
+					break;
+				}
 			}
-			else if (al_key_down(&keystate, ALLEGRO_KEY_UP))
-			{
-				y -= moveSpeed;
-				dir = UP;
-				help2 = 1;
-				help = 0;
-			}
-			else if (al_key_down(&keystate, ALLEGRO_KEY_RIGHT))
-			{
-				x += moveSpeed;
-				dir = RIGHT;
-				help = 2;
-				help2 = 0;
-			}
-			else if (al_key_down(&keystate, ALLEGRO_KEY_LEFT))
-			{
-				x -= moveSpeed;
-				dir = LEFT;
-				help = 1;
-				help2 = 0;
-			}
-			else
-				active = false;
-			
-			UpdateBullet(bullets, NUM_BULLETS);
-			
-			if (active)
-				sourceX += al_get_bitmap_width(player1) / 15;
-			else
-				sourceX = 200;
 
-			if (sourceX >= al_get_bitmap_width(player1))
-				sourceX = 0;
-			sourceY = dir;
-		
-			draw = true;
+			else if (ev.type == ALLEGRO_EVENT_KEY_UP)
+			{
+				switch (ev.keyboard.keycode)
+				{
+				case ALLEGRO_KEY_ESCAPE:
+					done = true;
+					break;
+				case ALLEGRO_KEY_LEFT:
+					keys[LEFT] = false;
+					break;
+				case ALLEGRO_KEY_RIGHT:
+					keys[RIGHT] = false;
+					break;
+				case ALLEGRO_KEY_UP:
+					keys[UP] = false;
+					break;
+				case ALLEGRO_KEY_DOWN:
+					keys[DOWN] = false;
+					break;
+				case ALLEGRO_KEY_SPACE:
+					keys[SPACE] = false;
+					break;
+				}
+			}
+
+
+			//START OF TIMER~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+			else if (ev.type == ALLEGRO_EVENT_TIMER)
+			{
+				render = true;
+
+				//UPDATE FPS
+				frames++;
+				if (al_current_time() - gameTime >= 1)
+				{
+					gameTime = al_current_time();
+					gameFPS = frames;
+					frames = 0;
+				}
+
+				//Set Barrier around map
+				//Physical barrier around map
+				if (x < 20) //left
+					x = 20;
+
+				if (x > WIDTH - 20) //Right
+					x = WIDTH - 20;
+
+				if (y > HEIGHT - 20) //Bottom
+					y = HEIGHT - 20;
+
+				if (y < 40) //Top
+					y = 40;
+
+				active = true;
+				if (al_key_down(&keystate, ALLEGRO_KEY_DOWN))
+				{
+					y += moveSpeed;
+					dir = DOWN;
+					help2 = 2;
+					help = 0;
+				}
+				else if (al_key_down(&keystate, ALLEGRO_KEY_UP))
+				{
+					y -= moveSpeed;
+					dir = UP;
+					help2 = 1;
+					help = 0;
+				}
+				else if (al_key_down(&keystate, ALLEGRO_KEY_RIGHT))
+				{
+					x += moveSpeed;
+					dir = RIGHT;
+					help = 2;
+					help2 = 0;
+				}
+				else if (al_key_down(&keystate, ALLEGRO_KEY_LEFT))
+				{
+					x -= moveSpeed;
+					dir = LEFT;
+					help = 1;
+					help2 = 0;
+				}
+				else
+					active = false;
+
+				UpdateBullet(bullets, NUM_BULLETS);
+
+				if (active)
+					sourceX += al_get_bitmap_width(player1) / 15;
+				else
+					sourceX = 200;
+
+				if (sourceX >= al_get_bitmap_width(player1))
+					sourceX = 0;
+				sourceY = dir;
+
+				draw = true;
 
 				for (int j = 0; j < NUM_BULLETS; j++)
 				{
-						if (((((zombposx - 15) <= bullets[j].x) && ((zombposx + 15) >= bullets[j].x))) &&
-							((((zombposy - 15) <= bullets[j].y) && ((zombposy + 15) >= bullets[j].y))))
-						{
-							bullets[j].live = false;
-							bullets[j].x = -1000;
-							bullets[j].y = -1000;
-							zomblife -= 1;
-						}
+					if (((((zombposx - 15) <= bullets[j].x) && ((zombposx + 15) >= bullets[j].x))) &&
+						((((zombposy - 15) <= bullets[j].y) && ((zombposy + 15) >= bullets[j].y))))
+					{
+						bullets[j].live = false;
+						bullets[j].x = -1000;
+						bullets[j].y = -1000;
+						zomblife -= 1;
+					}
 				}
-				
+
 				if (swag == 60)
 				{
 					swag = 0;
@@ -486,10 +620,10 @@ int main(void)
 					((((zombposy - 15) <= y) && ((zombposy + 15) >= y))))
 				{
 					swag++;
-					if(swag==1)
-					life -= 1;
+					if (swag == 1)
+						life -= 1;
 				}
-				
+
 				//Start of AI
 				if (state == IDLE)
 				{
@@ -505,7 +639,7 @@ int main(void)
 					{
 						float angle = movingatanagletocharacter(zombposx, zombposy, x, y);
 						//std::cout << angle<<std::endl;
-						
+
 						zombposy += (2 * sin(angle));
 						zombposx += (2 * cos(angle));
 
@@ -528,7 +662,7 @@ int main(void)
 						float angle = movingatanagletocharacter(zombposx, zombposy, originx, originy);
 						zombposy += (2 * sin(angle));
 						zombposx += (2 * cos(angle));
-						
+
 
 						if (aggrorange > calcdistancefromchartozombie(zombposx, zombposy, x, y))
 							stateswitch(state, ATTACKING);
@@ -543,281 +677,382 @@ int main(void)
 				if (sourceZ >= al_get_bitmap_width(zombie))
 					sourceZ = 0;
 				sourceA = dir1;
-				
-			//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Collisions~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-				
-				//Houses on left hand side facing right
-				if (Collision(x, y, 101, 201, 123, 900))
+
+				//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Collisions~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				if (gamestate == 1)
 				{
-					if (dir == 0)
-						y -= moveSpeed;
-					else if (dir == 1)
-						x += moveSpeed;
-					else if (dir == 2)
-						x -= moveSpeed;
-					else if (dir == 3)
-						y += moveSpeed;
+					//Houses on left hand side facing right
+					if (Collision(x, y, 101, 201, 123, 900))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+					//Second row of houses facing left
+					if (Collision(x, y, 500, 201, 114, 585))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+					//Houses facing down in the middle of the map
+					if (Collision(x, y, 680, 710, 365, 110))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+					//Houses facing right on the right hand side of the map
+					if (Collision(x, y, 1100, 201, 114, 590))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+					//Houses facing left on the right hand side of the map
+					if (Collision(x, y, 1500, 201, 114, 590))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+					//Houses at the very bottom of the map facing right
+					if (Collision(x, y, 1060, 1030, 114, 590))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+
+					//Tree collisions
+					//Tree on left bottom hand corner
+					if (Collision(x, y, 660, 600, 46, 70))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+					//Tree in top left hand corner
+					if (Collision(x, y, 708, 308, 46, 70))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+					//Tree in top right hand corner
+					if (Collision(x, y, 985, 318, 46, 70))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+					//Tree in middle of four trees
+					if (Collision(x, y, 870, 470, 46, 70))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+					//Tree in bottom right hand corner of group of five trees
+					if (Collision(x, y, 1000, 535, 46, 70))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+					//Minimap
+					if (Collision(x, y, 1654, 0, 266, 160))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+
+					//Health
+					if (Collision(x, y, 900, 0, 80, 80))
+					{
+						if (dir == 0)
+							y -= moveSpeed;
+						else if (dir == 1)
+							x += moveSpeed;
+						else if (dir == 2)
+							x -= moveSpeed;
+						else if (dir == 3)
+							y += moveSpeed;
+					}
+					//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+				}
+			}
+			
+			if (draw)
+			{
+				//Generate tiles for Map
+				for (int i = 0; i < mapSize; i++)
+				{
+					al_draw_bitmap_region(map1, tileSize * map[i], 0, tileSize, tileSize,
+						xcam + tileSize * (i % mapcolumn), ycam + tileSize * (i / mapcolumn), 0);
 				}
 
-				//Second row of houses facing left
-				if (Collision(x, y, 500, 201, 114, 585))
+				//display HUD Stuff
+				al_draw_textf(font18, al_map_rgb(255, 0, 255), 5, 5, 0, "FPS: %i", gameFPS);
+
+				al_draw_textf(font18, al_map_rgb(255, 255, 255), 1550, 5, ALLEGRO_ALIGN_RIGHT,
+					"X: %.0f", x);
+				al_draw_textf(font18, al_map_rgb(255, 255, 255), 1650, 5, ALLEGRO_ALIGN_RIGHT,
+					"Y: %.0f", y);
+
+				al_draw_bitmap_region(Health, 0, 0, 75, 75, 900, 0, NULL);
+				if (life == 0)
 				{
-					if (dir == 0)
-						y -= moveSpeed;
-					else if (dir == 1)
-						x += moveSpeed;
-					else if (dir == 2)
-						x -= moveSpeed;
-					else if (dir == 3)
-						y += moveSpeed;
+					al_draw_bitmap_region(emptyheart, 0, 0, 75, 75, 900, 0, NULL);
 				}
+					
+				al_draw_textf(font18, al_map_rgb(255, 255, 255), 945, 20, ALLEGRO_ALIGN_RIGHT,
+					" %.0i", life);
+				
+				al_draw_textf(font18, al_map_rgb(255, 255, 255), 860, 5, ALLEGRO_ALIGN_RIGHT,
+					"Exp: %i", exp);
+
+				al_draw_textf(font18, al_map_rgb(255, 255, 255), 1135, 5, ALLEGRO_ALIGN_RIGHT,
+					"Speed: %.0f", moveSpeed);
+
+				al_draw_bitmap_region(clock, 0, 0, 100, 100, 1810, 980, NULL);
+
+				al_draw_textf(font18, al_map_rgb(0, 0, 0), 1872, 1012, ALLEGRO_ALIGN_RIGHT,
+					" %.0f", gameTime); 
+
+				//Draw minimap
+				al_draw_bitmap_region(minimap, 0, 0, 266, 151, 1654, 0, NULL);
+
+				//Generating tree sprites on map
+				al_draw_bitmap_region(deadtree, 0, 0, 46, 76, 650, 580, NULL);
+				al_draw_bitmap_region(deadtree, 0, 0, 46, 76, 700, 300, NULL);
+				al_draw_bitmap_region(deadtree, 0, 0, 46, 76, 970, 310, NULL);
+				al_draw_bitmap_region(deadtree, 0, 0, 46, 76, 860, 450, NULL);
+				al_draw_bitmap_region(deadtree, 0, 0, 46, 76, 990, 520, NULL);
+
+				//Generate house sprites on map
+
+				//Houses on left handed side facing right
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 201, NULL);
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 320, NULL);
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 439, NULL);
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 548, NULL);
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 667, NULL);
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 786, NULL);
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 905, NULL);
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 1024, NULL);
+
+				//Final destination
+				al_draw_bitmap_region(house, 0, 0, 143, 100, 1695, 760, NULL);
+
+				//Houses facing left (Second row of houses after first row)
+				al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 450, 201, NULL);
+				al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 450, 320, NULL);
+				al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 450, 439, NULL);
+				al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 450, 548, NULL);
+				al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 450, 667, NULL);
 
 				//Houses facing down in the middle of the map
-				if (Collision(x, y, 680, 710, 365, 110))
+				al_draw_bitmap_region(townhousedown, 0, 0, 118, 148, 670, 700, NULL);
+				al_draw_bitmap_region(townhousedown, 0, 0, 118, 148, 787, 700, NULL);
+				al_draw_bitmap_region(townhousedown, 0, 0, 118, 148, 905, 700, NULL);
+
+				//Houses facing right on right side of screen
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1101, 201, NULL);
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1101, 320, NULL);
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1101, 439, NULL);
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1101, 548, NULL);
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1101, 667, NULL);
+
+				//al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1051, 786, NULL);
+				//House facing right at bottom of screen
+				al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1051, 1024, NULL);
+
+				//House on right hand side facing left
+				al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 1450, 201, NULL);
+				al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 1450, 320, NULL);
+				al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 1450, 439, NULL);
+				al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 1450, 548, NULL);
+				al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 1450, 667, NULL);
+
+				//Generate player
+				if (life > 0)
 				{
-					if (dir == 0)
-						y -= moveSpeed;
-					else if (dir == 1)
-						x += moveSpeed;
-					else if (dir == 2)
-						x -= moveSpeed;
-					else if (dir == 3)
-						y += moveSpeed;
+					al_draw_bitmap_region(player1, sourceX, sourceY * al_get_bitmap_height(player1) / 4, 40, 40, x - 19, y - 19, NULL);
+				}
+				else if(life==0)
+				{
+					al_show_native_message_box(display, "Zombies: The Final Hour", "YOU HAVE DIED!", NULL, NULL, ALLEGRO_MESSAGEBOX_OK_CANCEL);
+					done = true;
 				}
 
-				//Houses facing right on the right hand side of the map
-				if (Collision(x, y, 1100, 201, 114, 590))
+				//Enemies														
+				//al_draw_circle(originx, originy, aggrorange, al_map_rgba_f(.5, .5, .5, .5), 1);
+				//al_draw_circle(zombposx, zombposy, aggrorange, al_map_rgba_f(.5, 0, .5, .5), 1);
+				if (zomblife > 0)
 				{
-					if (dir == 0)
-						y -= moveSpeed;
-					else if (dir == 1)
-						x += moveSpeed;
-					else if (dir == 2)
-						x -= moveSpeed;
-					else if (dir == 3)
-						y += moveSpeed;
+					al_draw_bitmap_region(zombie, sourceZ, sourceA * al_get_bitmap_height(zombie) / 4, 50, 50, zombposx - 24, zombposy - 24, NULL);
+				}
+				else
+				{
+					int q = 0;
+					zombposx = -1000;
+					zombposy = -1000;
+					q = exp + 1;
+					al_draw_textf(font18, al_map_rgb(255, 255, 255), 645, 5, ALLEGRO_ALIGN_RIGHT,
+						"Exp: %.0i", q);
 				}
 
-				//Houses facing left on the right hand side of the map
-				if (Collision(x, y, 1500, 201, 114, 590))
-				{
-					if (dir == 0)
-						y -= moveSpeed;
-					else if (dir == 1)
-						x += moveSpeed;
-					else if (dir == 2)
-						x -= moveSpeed;
-					else if (dir == 3)
-						y += moveSpeed;
-				}
+				//Draw bullets
+				DrawBullet(bullets, NUM_BULLETS);
 
-				//Houses at the very bottom of the map facing right
-				if (Collision(x, y, 1060, 1030, 114, 590))
-				{
-					if (dir == 0)
-						y -= moveSpeed;
-					else if (dir == 1)
-						x += moveSpeed;
-					else if (dir == 2)
-						x -= moveSpeed;
-					else if (dir == 3)
-						y += moveSpeed;
-				}
+				al_flip_display();
+				al_clear_to_color(al_map_rgb(0, 0, 0));
+			}
+			if ((x > 1730) && (x < 1760) && (y > 820) && (y < 850))
+			{
+				al_show_native_message_box(display, "Zombies: The Final Hour", "LEVEL CONQUERED!", NULL, NULL, ALLEGRO_MESSAGEBOX_OK_CANCEL);
+				keys[UP] = false;
+				keys[DOWN] = false;
+				keys[LEFT] = false;
+				keys[RIGHT] = false;
+				keys[SPACE] = false;
+				x = -100;
+				y = -100;
+				gamestate = 2;
+			}
 
-				
-				//Tree collisions
-				//Tree on left bottom hand corner
-				if (Collision(x, y, 660, 600, 46, 70))
-				{
-					if (dir == 0)
-						y -= moveSpeed;
-					else if (dir == 1)
-						x += moveSpeed;
-					else if (dir == 2)
-						x -= moveSpeed;
-					else if (dir == 3)
-						y += moveSpeed;
-				}
-
-				//Tree in top left hand corner
-				if (Collision(x, y, 708, 308, 46, 70))
-				{
-					if (dir == 0)
-						y -= moveSpeed;
-					else if (dir == 1)
-						x += moveSpeed;
-					else if (dir == 2)
-						x -= moveSpeed;
-					else if (dir == 3)
-						y += moveSpeed;
-				}
-
-				//Tree in top right hand corner
-				if (Collision(x, y, 985, 318, 46, 70))
-				{
-					if (dir == 0)
-						y -= moveSpeed;
-					else if (dir == 1)
-						x += moveSpeed;
-					else if (dir == 2)
-						x -= moveSpeed;
-					else if (dir == 3)
-						y += moveSpeed;
-				}
-
-				//Tree in middle of four trees
-				if (Collision(x, y, 870, 470, 46, 70))
-				{
-					if (dir == 0)
-						y -= moveSpeed;
-					else if (dir == 1)
-						x += moveSpeed;
-					else if (dir == 2)
-						x -= moveSpeed;
-					else if (dir == 3)
-						y += moveSpeed;
-				}
-
-				//Tree in bottom right hand corner of group of five trees
-				if (Collision(x, y, 1000, 535, 46, 70))
-				{
-					if (dir == 0)
-						y -= moveSpeed;
-					else if (dir == 1)
-						x += moveSpeed;
-					else if (dir == 2)
-						x -= moveSpeed;
-					else if (dir == 3)
-						y += moveSpeed;
-				}
-
-
-				//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		}
 
-		if (draw)
+		//Start of level 2
+		//if (gamestate == 4)
+		/*{
+
+		}*/
+
+		//Controls menu
+		if (gamestate == 3)
 		{
-			//Generate tiles for Map
-			for (int i = 0; i < mapSize; i++)
+			ALLEGRO_EVENT ev3;
+			al_wait_for_event(event_queue, &ev3);
+			if (ev3.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN)
 			{
-				al_draw_bitmap_region(map1, tileSize * map[i], 0, tileSize, tileSize,
-				xcam + tileSize * (i % mapcolumn), ycam + tileSize * (i / mapcolumn), 0);
+				pos_x = ev3.mouse.x;
+				pos_y = ev3.mouse.y;
 			}
 
-			//display FPS on screen
-			al_draw_textf(font18, al_map_rgb(255, 0, 255), 5, 5, 0, "FPS: %i", gameFPS);
+			al_draw_bitmap(controlsmenu, 0, 0, 0);
 
-			al_draw_textf(font18, al_map_rgb(255, 255, 255), 200, 5, ALLEGRO_ALIGN_RIGHT,
-				"X pos: %.0f", x); 
-			al_draw_textf(font18, al_map_rgb(255, 255, 255), 300, 5, ALLEGRO_ALIGN_RIGHT,
-				"Y pos: %.0f", y); 
-			al_draw_textf(font18, al_map_rgb(255, 255, 255), 400, 5, ALLEGRO_ALIGN_RIGHT,
-				"Exp: %.0f", exp);
+			al_draw_textf(font18, al_map_rgb(255, 255, 255), 500, 5, ALLEGRO_ALIGN_RIGHT,
+				"mouse pos x: %.0i", pos_x);
 
-			//Generating tree sprites on map
-			al_draw_bitmap_region(deadtree, 0, 0, 46, 76, 650, 580, NULL);
-			al_draw_bitmap_region(deadtree, 0, 0, 46, 76, 700, 300, NULL);
-			al_draw_bitmap_region(deadtree, 0, 0, 46, 76, 970, 310, NULL);
-			al_draw_bitmap_region(deadtree, 0, 0, 46, 76, 860, 450, NULL);
-			al_draw_bitmap_region(deadtree, 0, 0, 46, 76, 990, 520, NULL);
+			al_draw_textf(font18, al_map_rgb(255, 255, 255), 1000, 5, ALLEGRO_ALIGN_RIGHT,
+				"mouse pos y: %.0i", pos_y);
 
-			//Generate house sprites on map
-
-			//Houses on left handed side facing right
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 201, NULL);
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 320, NULL);
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 439, NULL);
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 548, NULL);
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 667, NULL);
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 786, NULL);
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 905, NULL);
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 101, 1024, NULL);
-			
-			//Final destination
-			al_draw_bitmap_region(house, 0, 0, 143, 100, 1695, 760, NULL);
-
-			//Houses facing left (Second row of houses after first row)
-			al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 450, 201, NULL);
-			al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 450, 320, NULL);
-			al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 450, 439, NULL);
-			al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 450, 548, NULL);
-			al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 450, 667, NULL);
-
-			//Houses facing down in the middle of the map
-			al_draw_bitmap_region(townhousedown, 0, 0, 118, 148, 670, 700, NULL);
-			al_draw_bitmap_region(townhousedown, 0, 0, 118, 148, 787, 700, NULL);
-			al_draw_bitmap_region(townhousedown, 0, 0, 118, 148, 905, 700, NULL);
-			
-			//Houses facing right on right side of screen
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1101, 201, NULL);
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1101, 320, NULL);
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1101, 439, NULL);
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1101, 548, NULL);
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1101, 667, NULL);
-
-			//al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1051, 786, NULL);
-			//House facing right at bottom of screen
-			al_draw_bitmap_region(townhouse, 0, 0, 148, 118, 1051, 1024, NULL);
-
-			//House on right hand side facing left
-			al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 1450, 201, NULL);
-			al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 1450, 320, NULL);
-			al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 1450, 439, NULL);
-			al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 1450, 548, NULL);
-			al_draw_bitmap_region(townhouseleft, 0, 0, 148, 118, 1450, 667, NULL);
-
-			//Generate player
-			if (life > 0)
+			//Return to main menu
+			if ((pos_x < 817) && (pos_x > 48) && (pos_y < 1026) && (pos_y > 839))
 			{
-				al_draw_bitmap_region(player1, sourceX, sourceY * al_get_bitmap_height(player1) / 4, 40, 40, x - 19, y - 19, NULL);
+				pos_x = -100;
+				pos_y = -100;
+				gamestate = 2;
 			}
-			else
-			{
-				al_show_native_message_box(display, "Zombies: The Final Hour", "YOU HAVE DIED!", NULL, NULL, ALLEGRO_MESSAGEBOX_OK_CANCEL);
-				done = true;
-			}
-			
-			//Enemies														
-			//al_draw_circle(originx, originy, aggrorange, al_map_rgba_f(.5, .5, .5, .5), 1);
-			//al_draw_circle(zombposx, zombposy, aggrorange, al_map_rgba_f(.5, 0, .5, .5), 1);
-			if (zomblife > 0)
-			{
-				al_draw_bitmap_region(zombie, sourceZ, sourceA * al_get_bitmap_height(zombie) / 4, 50, 50, zombposx - 24, zombposy - 24, NULL);
-			}
-			else
-			{
-				zombposx = -1000;
-				zombposy = -1000;
-			}
-			
-			al_draw_textf(font18, al_map_rgb(255, 255, 255), 400, 5, ALLEGRO_ALIGN_RIGHT,
-				"Exp: %.0f", exp);
-			
-			//Draw bullets
-			DrawBullet(bullets, NUM_BULLETS);
-			
+
 			al_flip_display();
 			al_clear_to_color(al_map_rgb(0, 0, 0));
-		}
-
-		if ((x==1730) && (y==850))
-		{
-			al_show_native_message_box(display, "Zombies: The Final Hour", "LEVEL CONQUERED!", NULL, NULL, ALLEGRO_MESSAGEBOX_OK_CANCEL);
-			done = true;
-		}
+		}	
 	}
 
 //Destroy all windows
 	al_show_native_message_box(display, "Zombies: The Final Hour", "Do you really want to exit?", NULL, NULL, ALLEGRO_MESSAGEBOX_YES_NO);
+
 	al_destroy_bitmap(title);
 	al_destroy_bitmap(player1);
 	al_destroy_bitmap(townhouse);
 	al_destroy_bitmap(townhousedown);
 	al_destroy_bitmap(townhouseleft);
 	al_destroy_bitmap(deadtree);
+	al_destroy_bitmap(clock);
+	al_destroy_bitmap(apocalypse);
+	al_destroy_bitmap(controlsmenu);
+	al_destroy_bitmap(Health);
+	al_destroy_bitmap(inventory);
 	al_destroy_bitmap(house);
 	al_destroy_bitmap(zombie);
 	al_destroy_bitmap(map1);
+	al_destroy_bitmap(minimap);
+	al_destroy_bitmap(emptyheart);
 	al_destroy_event_queue(event_queue);
 	al_destroy_timer(timer);
 	al_destroy_display(display);
