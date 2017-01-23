@@ -141,8 +141,8 @@ void updatezombie(zombiez zombies[], int size)
 					 zombies[i].angle = movingatanagletocharacter(zombies[i].zombposx, zombies[i].zombposy, x, y);
 					//std::cout << zombies[i].zombposy<<std::endl;
 
-					 zombies[i].zombposy +=(1.75 * sin(zombies[i].angle));
-					zombies[i].zombposx += (1.75 * cos(zombies[i].angle));
+					 zombies[i].zombposy +=(2 * sin(zombies[i].angle));
+					zombies[i].zombposx += (2 * cos(zombies[i].angle));
 
 					if (aggrorange < calcdistancefromchartozombie(zombies[i].zombposx, zombies[i].zombposy, x, y))
 						cyclestate[i]= RETURNING;
@@ -161,8 +161,8 @@ void updatezombie(zombiez zombies[], int size)
 				else
 				{
 					zombies[i].angle = movingatanagletocharacter(zombies[i].zombposx, zombies[i].zombposy, zombies[i].originx, zombies[i].originy);
-					zombies[i].zombposy += (1.75 * sin(zombies[i].angle));
-					zombies[i].zombposx += (1.75 * cos(zombies[i].angle));
+					zombies[i].zombposy += (2 * sin(zombies[i].angle));
+					zombies[i].zombposx += (2 * cos(zombies[i].angle));
 
 
 					if (aggrorange > calcdistancefromchartozombie(zombies[i].zombposx, zombies[i].zombposy, x, y))
@@ -270,7 +270,6 @@ void UpdateBullet(Bullet bullet[], int size)
 	}
 }
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 int main(void)
 {
@@ -628,6 +627,15 @@ int main(void)
 			ALLEGRO_EVENT ev;
 			al_wait_for_event(event_queue, &ev);
 			al_get_keyboard_state(&keystate);
+
+
+			if (ev.type == ALLEGRO_EVENT_MOUSE_BUTTON_DOWN)
+			{
+				pos_x = ev.mouse.x;
+				pos_y = ev.mouse.y;
+				std::cout << pos_x << std::endl;
+				std::cout << pos_y << std::endl;
+			}
 
 			if (ev.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
 			{
@@ -1136,7 +1144,10 @@ int main(void)
 					"Exp: %i", exp);
 
 				al_draw_textf(font18, al_map_rgb(255, 255, 255), 1135, 5, ALLEGRO_ALIGN_RIGHT,
-					"Speed: %.0f", moveSpeed);
+					"%.0f", moveSpeed);
+
+				//Speed image
+				al_draw_bitmap_region(speedimg, 0, 0, 75, 75, 1040, -10, NULL);
 
 				al_draw_bitmap_region(clock, 0, 0, 100, 100, 1810, 980, NULL);
 
@@ -1269,6 +1280,35 @@ int main(void)
 				x = -100;
 				y = -100;
 				gamestate = 4;
+			}
+
+			//Fire
+			if ((x > 1555) && (x < 1583) && (y > 783) && (y < 1050))
+			{
+				swag++;
+				if (swag == 1)
+				life -= 1;
+			}
+
+			if ((x > 1258) && (x < 1283) && (y > 883) && (y < 910))
+			{
+				swag++;
+				if (swag == 1)
+					life -= 1;
+			}
+
+			if ((x > 810) && (x < 850) && (y > 41) && (y < 98))
+			{
+				swag++;
+				if (swag == 1)
+					life -= 1;
+			}
+
+			if ((x > 505) && (x < 583) && (y > 834) && (y < 899))
+			{
+				swag++;
+				if (swag == 1)
+					life -= 1;
 			}
 		}
 
