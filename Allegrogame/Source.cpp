@@ -1271,14 +1271,14 @@ int main(void)
 			if ((x > 1720) && (x < 1770) && (y > 810) && (y < 850))
 			{
 				al_show_native_message_box(display, "Zombies: The Final Hour", "LEVEL CONQUERED!", NULL, NULL, ALLEGRO_MESSAGEBOX_OK_CANCEL);
+				x = -100;
+				y = -100;
 				keys[RIGHT] = false;
 				keys[UP] = false;
 				keys[DOWN] = false;
 				keys[LEFT] = false;
 				keys[SPACE] = false;
 				dir = 0;
-				x = -100;
-				y = -100;
 				gamestate = 4;
 			}
 
